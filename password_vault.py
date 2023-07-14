@@ -1,5 +1,5 @@
 from cryptography.fernet import Fernet
-import os, hashlib, json, base64
+import os, hashlib, pickle, base64
 
 
 class PasswordVault:
@@ -8,20 +8,20 @@ class PasswordVault:
         Initialize a PasswordVault object whose data members contain paths to
         where passwords and user information are stored.
         """
-        self.user_info_path = os.path.join(os.getcwd(), "vault", "user_info.json")
-        self.passwords_path = os.path.join(os.getcwd(), "vault", "passwords.json")
+        self.user_info_path = os.path.join(os.getcwd(), "user_info.bin")
+        self.passwords_path = os.path.join(os.getcwd(), "passwords.bin")
 
     def initialize_user(self):
         """
         Initialize user data used for validating master passwords and storing
         salt to generate derived keys for encryption/decryption.
         """
-        data = self._get_json_data(self.user_info_path)
+        data = self._load_data_from_file(self.user_info_path)
         master_password = input("Enter a Master Password:\n")
         data["hashed_master_pass"] = self._hash_master_password(master_password)
         data["salt"] = self._generate_salt()
-        with open(self.user_info_path, "w") as json_file:
-            json.dump(data, json_file, indent=4)
+        with open(self.user_info_path, "wb") as file:
+            pickle.dump(data, file)
 
     def write_password(self, master_password, service, password):
         """
@@ -36,11 +36,11 @@ class PasswordVault:
         if (master_pass_is_correct):
             salt = self._get_stored_salt()
             master_pass_key = self._get_master_pass_key(master_password, salt)
-            data = self._get_json_data(self.passwords_path)
+            data = self._load_data_from_file(self.passwords_path)
             encrypted_password = self._encrypt_password(master_pass_key, password)
-            data[service] = encrypted_password.decode("utf-8")
-            with open(self.passwords_path, "w") as json_file:
-                json.dump(data, json_file, indent=4)
+            data[service] = encrypted_password
+            with open(self.passwords_path, "wb") as file:
+                pickle.dump(data, file)
         else:
             print("Invalid Master Password")
 
@@ -56,7 +56,7 @@ class PasswordVault:
         if (master_pass_is_correct):
             salt = self._get_stored_salt()
             master_pass_key = self._get_master_pass_key(master_password, salt)
-            data = self._get_json_data(self.passwords_path)
+            data = self._load_data_from_file(self.passwords_path)
             if service in data:
                 encrypted_password = data[service]
                 decryped_password = self._decrypt_password(
@@ -76,14 +76,14 @@ class PasswordVault:
         """
         master_pass_is_correct = self._validate_master_password(master_password)
         if (master_pass_is_correct):
-            data = self._get_json_data(self.passwords_path)
+            data = self._load_data_from_file(self.passwords_path)
             if service in data:
                 del data[service]
-                with open(self.passwords_path, "w") as json_file:
-                    json.dump(data, json_file, indent=4)
+                with open(self.passwords_path, "wb") as file:
+                    pickle.dump(data, file)
 
     def _validate_master_password(self, master_password):
-        hashed_password_to_validate = self._hash_master_password(master_password).encode("utf-16-be")
+        hashed_password_to_validate = self._hash_master_password(master_password)
         return hashed_password_to_validate == self._get_hashed_master_pass()
 
     def _hash_master_password(self, master_password):
@@ -94,11 +94,11 @@ class PasswordVault:
         - master_password (string): A string representation of an unhashed master password.
 
         Returns:
-        - string: The hashed master password as a string.
+        - bytes: The hashed master password as bytes.
         """
         encoded_password = master_password.encode()
         hashed_password = hashlib.sha3_256(encoded_password).digest()
-        return hashed_password.decode("utf-16-be")
+        return hashed_password
     
     def _generate_salt(self):
         """
@@ -106,9 +106,9 @@ class PasswordVault:
         for encryption/decryption.
 
         Returns:
-        - string: The generated salt as a string.
+        - bytes: The generated salt as bytes.
         """
-        return os.urandom(16).decode("utf-16-be")
+        return os.urandom(16)
 
     def _get_master_pass_key(self, master_password, salt):
         """
@@ -135,10 +135,10 @@ class PasswordVault:
         - password_to_encrypt (string): The password to be encrypted.
 
         Returns:
-        - string: The encrypted password as a string.
+        - bytes: The encrypted password as bytes.
         """
         f = Fernet(master_pass_key)
-        return f.encrypt(password_to_encrypt.encode("utf-8"))
+        return f.encrypt(password_to_encrypt.encode())
 
     def _decrypt_password(self, master_pass_key, encrypted_password):
         """
@@ -152,7 +152,7 @@ class PasswordVault:
         - string: The decrypted password as a string.
         """
         f = Fernet(master_pass_key)
-        return f.decrypt(encrypted_password).decode("utf-8")
+        return f.decrypt(encrypted_password).decode()
 
     def _get_hashed_master_pass(self):
         """
@@ -161,8 +161,8 @@ class PasswordVault:
         Returns:
         - bytes: The hashed master password.
         """
-        data = self._get_json_data(self.user_info_path)
-        return data["hashed_master_pass"].encode("utf-16-be")
+        data = self._load_data_from_file(self.user_info_path)
+        return data["hashed_master_pass"]
 
     def _get_stored_salt(self):
         """
@@ -171,22 +171,22 @@ class PasswordVault:
         Returns:
         - bytes: The stored salt.
         """
-        data = self._get_json_data(self.user_info_path)
-        return data["salt"].encode("utf-16-be")
+        data = self._load_data_from_file(self.user_info_path)
+        return data["salt"]
 
-    def _get_json_data(self, path):
+    def _load_data_from_file(self, path):
         """
-        Retrieve JSON data from the specified path.
+        Retrieve and unpickle data from the specified file.
 
         Parameters:
-        - path (string): The path to the JSON file.
+        - path (string): The path to the file.
 
         Returns:
-        - dict: The JSON data.
+        - dict: The unpickled data.
         """
         if not os.path.exists(path):
             data = {}
         else:
-            with open(path, "r") as json_file:
-                data = json.load(json_file)
+            with open(path, "rb") as file:
+                data = pickle.load(file)
         return data
