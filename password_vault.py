@@ -18,34 +18,10 @@ class PasswordVault:
         """
         data = self._get_json_data(self.user_info_path)
         master_password = input("Enter a Master Password:\n")
-        data["hashed_master_pass"] = self.hash_master_password(master_password)
-        data["salt"] = self.generate_salt()
+        data["hashed_master_pass"] = self._hash_master_password(master_password)
+        data["salt"] = self._generate_salt()
         with open(self.user_info_path, "w") as json_file:
             json.dump(data, json_file, indent=4)
-
-    def hash_master_password(self, master_password):
-        """
-        Hashes the master password for validation purposes using the sha3_256 algorithm.
-
-        Parameters:
-        - master_password (string): A string representation of an unhashed master password.
-
-        Returns:
-        - string: The hashed master password as a string.
-        """
-        encoded_password = master_password.encode()
-        hashed_password = hashlib.sha3_256(encoded_password).digest()
-        return hashed_password.decode("utf-16-be")
-
-    def generate_salt(self):
-        """
-        Generate a random value (salt) used with the master password to generate a derived key
-        for encryption/decryption.
-
-        Returns:
-        - string: The generated salt as a string.
-        """
-        return os.urandom(16).decode("utf-16-be")
 
     def write_password(self, master_password, service, password):
         """
@@ -56,10 +32,8 @@ class PasswordVault:
         - service(string): The service the encrypted password will be paired with.
         - password(string): The password we wish to encrypt and write to the json file.
         """
-        if (
-            self.hash_master_password(master_password).encode("utf-16-be")
-            == self._get_hashed_master_pass()
-        ):
+        master_pass_is_correct = self._validate_master_password(master_password)
+        if (master_pass_is_correct):
             salt = self._get_stored_salt()
             master_pass_key = self._get_master_pass_key(master_password, salt)
             data = self._get_json_data(self.passwords_path)
@@ -78,10 +52,8 @@ class PasswordVault:
         - master_password (string): The master password used to validate access and decrypt the password.
         - service (string): The service for which we want to retrieve and decrypt the password.
         """
-        if (
-            self.hash_master_password(master_password).encode("utf-16-be")
-            == self._get_hashed_master_pass()
-        ):
+        master_pass_is_correct = self._validate_master_password(master_password)
+        if (master_pass_is_correct):
             salt = self._get_stored_salt()
             master_pass_key = self._get_master_pass_key(master_password, salt)
             data = self._get_json_data(self.passwords_path)
@@ -93,6 +65,50 @@ class PasswordVault:
                 print(f"{service}: {decryped_password}")
         else:
             print("Invalid Master Password")
+
+    def del_password(self, master_password, service):
+        """
+        Delete the service and its password.
+
+        Parameters:
+        - master_password (string): The master password used to validate access.
+        - service (string): The service whose password we want to delete.
+        """
+        master_pass_is_correct = self._validate_master_password(master_password)
+        if (master_pass_is_correct):
+            data = self._get_json_data(self.passwords_path)
+            if service in data:
+                del data[service]
+                with open(self.passwords_path, "w") as json_file:
+                    json.dump(data, json_file, indent=4)
+
+    def _validate_master_password(self, master_password):
+        hashed_password_to_validate = self._hash_master_password(master_password).encode("utf-16-be")
+        return hashed_password_to_validate == self._get_hashed_master_pass()
+
+    def _hash_master_password(self, master_password):
+        """
+        Hashes the master password for validation purposes using the sha3_256 algorithm.
+
+        Parameters:
+        - master_password (string): A string representation of an unhashed master password.
+
+        Returns:
+        - string: The hashed master password as a string.
+        """
+        encoded_password = master_password.encode()
+        hashed_password = hashlib.sha3_256(encoded_password).digest()
+        return hashed_password.decode("utf-16-be")
+    
+    def _generate_salt(self):
+        """
+        Generate a random value (salt) used with the master password to generate a derived key
+        for encryption/decryption.
+
+        Returns:
+        - string: The generated salt as a string.
+        """
+        return os.urandom(16).decode("utf-16-be")
 
     def _get_master_pass_key(self, master_password, salt):
         """
