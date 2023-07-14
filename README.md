@@ -6,9 +6,17 @@ A command-line tool built with Python for securely managing passwords.
 Here are some planned features for the py-cli-password-manager project:
 
 - **Password Creation:** Generate strong and unique passwords for each service or website to enhance security.
-- **Password Storage:** Store passwords securely and encrypted to protect them from unauthorized access.
-- **Password Retrieval:** Implement a convenient way to access passwords quickly.
 - **Password Strength Detector:** Evaluate the strength of each password and provide recommendations for updating weak passwords.
-- **Offline Storage:** Ensure that the password manager stores passwords locally offline to maintain privacy and reduce reliance on external services.
 
-These features will provide users with a comprehensive password management solution that includes password strength assessment, secure storage, and the ability to store passwords locally offline.
+## Using The Password Manager
+
+Currently the Password Manager supports 3 commands:
+
+- `setup`: Set a master password, and generate salt.
+   $ python main.py setup
+
+- `set`: Store a password for a service.
+   $ python main.py set <master_password> <service> <password>
+
+- `get`: Retrieve a password for a service.
+   $ python main.py get <master_password> <service>
