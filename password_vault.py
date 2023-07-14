@@ -29,6 +29,9 @@ class PasswordVault:
 
         Parameters:
         - master_password (string): A string representation of an unhashed master password.
+
+        Returns:
+        - string: The hashed master password as a string.
         """
         encoded_password = master_password.encode()
         hashed_password = hashlib.sha3_256(encoded_password).digest()
@@ -38,6 +41,9 @@ class PasswordVault:
         """
         Generate a random value (salt) used with the master password to generate a derived key
         for encryption/decryption.
+
+        Returns:
+        - string: The generated salt as a string.
         """
         return os.urandom(16).decode("utf-16-be")
 
