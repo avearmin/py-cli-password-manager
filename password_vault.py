@@ -1,5 +1,5 @@
 from cryptography.fernet import Fernet
-import os, hashlib, pickle, base64
+import os, hashlib, pickle, base64, pyperclip
 
 
 class PasswordVault:
@@ -62,7 +62,8 @@ class PasswordVault:
                 decryped_password = self._decrypt_password(
                     master_pass_key, encrypted_password
                 )
-                print(f"{service}: {decryped_password}")
+                pyperclip.copy(decryped_password)
+                print("Copied password to clipboard")
         else:
             print("Invalid Master Password")
 
