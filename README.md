@@ -10,7 +10,7 @@ You can install these dependencies using pip:
 `pip install cryptography`
 `pip install pyperclip`
 
-You may encounter an error message that says: 'Pyperclip could not find a copy/paste mechanism for your system.' Please refer to the [Pyperclip documentation](https://pyperclip.readthedocs.io/en/latest/introduction.html#not-implemented-error) for instructions on how to resolve this issue.
+You may encounter an error message that says: 'Pyperclip could not find a copy/paste mechanism for your system.' Please refer to the [Pyperclip documentation](https://pyperclip.readthedocs.io/en/latest/#not-implemented-error) for instructions on how to resolve this issue.
 
 ## Future Updates
 
