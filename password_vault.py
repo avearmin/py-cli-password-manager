@@ -80,8 +80,9 @@ class PasswordVault:
         master_pass_is_correct = self._validate_master_password(master_password)
         if (master_pass_is_correct):
             data = self._load_data_from_file(self.passwords_path)
-            if service in data:
-                del data[service]
+            hashed_service = self._hash_service(service)
+            if hashed_service in data:
+                del data[hashed_service]
                 with open(self.passwords_path, "wb") as file:
                     pickle.dump(data, file)
 
