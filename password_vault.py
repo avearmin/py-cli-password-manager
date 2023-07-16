@@ -38,7 +38,8 @@ class PasswordVault:
             master_pass_key = self._get_master_pass_key(master_password, salt)
             data = self._load_data_from_file(self.passwords_path)
             encrypted_password = self._encrypt_password(master_pass_key, password)
-            data[service] = encrypted_password
+            hashed_service = self._hash_service(service)
+            data[hashed_service] = encrypted_password
             with open(self.passwords_path, "wb") as file:
                 pickle.dump(data, file)
         else:
@@ -57,8 +58,9 @@ class PasswordVault:
             salt = self._get_stored_salt()
             master_pass_key = self._get_master_pass_key(master_password, salt)
             data = self._load_data_from_file(self.passwords_path)
-            if service in data:
-                encrypted_password = data[service]
+            hashed_service = self._hash_service(service)
+            if hashed_service in data:
+                encrypted_password = data[hashed_service]
                 decryped_password = self._decrypt_password(
                     master_pass_key, encrypted_password
                 )
@@ -127,6 +129,20 @@ class PasswordVault:
         )
         return base64.urlsafe_b64encode(key)
 
+    def _hash_service(self, service):
+        """
+        Hashes the service name using the sha256 algorithm for security purposes.
+
+        Parameters:
+        - service (string): A string representation of an unhashed service name.
+
+        Returns:
+        - bytes: The hashed service name as bytes.
+        """
+        encoded_service = service.encode()
+        hashed_service = hashlib.sha256(encoded_service).digest()
+        return hashed_service
+    
     def _encrypt_password(self, master_pass_key, password_to_encrypt):
         """
         Encrypts the password using the provided master password key.
