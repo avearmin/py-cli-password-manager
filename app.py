@@ -11,6 +11,7 @@ class App:
         self.initialize_set_cmd()
         self.initialize_get_cmd()
         self.initialize_del_cmd()
+        self.initialize_gen_cmd()
 
     def initialize_setup_cmd(self):
         self.parser_setup_cmd = self.subparsers.add_parser('setup')
@@ -35,6 +36,12 @@ class App:
         self.parser_del_cmd.add_argument("service", type=str, help="The service you wish to delete")
         self.parser_del_cmd.set_defaults(func=self.vault.del_password)
 
+    def initialize_gen_cmd(self):
+        self.parser_gen_cmd = self.subparsers.add_parser('gen')
+        self.parser_gen_cmd.add_argument("master_password", type=str, help="The master password made in setup")
+        self.parser_gen_cmd.add_argument("service", type=str, help="The service you wish to pair the randomly generated password with")
+        self.parser_gen_cmd.set_defaults(func=self.vault.write_generated_password)
+
     def parse_arguments(self):
         args = self.parser.parse_args()
         if hasattr(args, 'func'):
@@ -53,6 +60,11 @@ class App:
                 args.func(master_password, service)
 
             elif args.func == self.vault.del_password:
+                master_password = args.master_password
+                service = args.service
+                args.func(master_password, service)
+            
+            elif args.func == self.vault.write_generated_password:
                 master_password = args.master_password
                 service = args.service
                 args.func(master_password, service)
