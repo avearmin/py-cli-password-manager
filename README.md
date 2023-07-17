@@ -31,4 +31,4 @@ Currently the Password Manager supports 5 commands:
 
 - `del`: Delete a service/password pair. $ python main.py del master_password service
 
-- `gen`: Generate a random password and store it. $ python main.py del master_password service
+- `gen`: Generate a random password and store it. $ python main.py gen master_password service
