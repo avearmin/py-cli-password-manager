@@ -12,11 +12,21 @@ You can install these dependencies using pip:
 
 You may encounter an error message that says: 'Pyperclip could not find a copy/paste mechanism for your system.' Please refer to the [Pyperclip documentation](https://pyperclip.readthedocs.io/en/latest/#not-implemented-error) for instructions on how to resolve this issue.
 
+## Features
+
+The py-cli-password-manager project offers the following features:
+
+- **Password Creation:** Generate strong and unique passwords for each service or website to enhance security.
+- **Password Encryption:** Encrypt passwords using the Fernet encryption scheme to protect sensitive information.
+- **Password Storage:** Store encrypted passwords securely for each service or website.
+- **Password Retrieval:** Decrypt and retrieve stored passwords when needed.
+- **Clipboard Integration:** Copy passwords directly to the clipboard for convenient pasting into login forms.
+- **Master Password:** Set a master password for accessing and managing stored passwords.
+
 ## Future Updates
 
 Here are some planned features for the py-cli-password-manager project:
 
-- **Password Creation:** Generate strong and unique passwords for each service or website to enhance security.
 - **Password Strength Detector:** Evaluate the strength of each password and provide recommendations for updating weak passwords.
 
 ## Using The Password Manager
