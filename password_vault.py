@@ -23,14 +23,9 @@ class PasswordVault:
         with open(self.user_info_path, "wb") as file:
             pickle.dump(data, file)
 
-    def write_password(self, master_password, service, password):
+    def write_password(self, master_password: str, service: str, password: str):
         """
         Write an encrypted password with its intended service to the file.
-
-        Parameters:
-        - master_password(string): The master password used to validate access and encrypt the password.
-        - service(string): The service the encrypted password will be paired with.
-        - password(string): The password we wish to encrypt and write to the json file.
         """
         master_pass_is_correct = self._validate_master_password(master_password)
         if master_pass_is_correct:
@@ -44,25 +39,17 @@ class PasswordVault:
                 pickle.dump(data, file)
         else:
             print("Invalid Master Password")
-    
-    def write_generated_password(self, master_password, service):
+
+    def write_generated_password(self, master_password: str, service: str):
         """
         Write an encrypted randomly generated password with its intended service to the file.
-
-        Parameters:
-        - master_password(string): The master password used to validate access and encrypt the password.
-        - service(string): The service the encrypted password will be paired with.
         """
         generated_password = self._generate_password()
         self.write_password(master_password, service, generated_password)
 
-    def get_password(self, master_password, service):
+    def get_password(self, master_password: str, service: str):
         """
         Get and decrypt the desired password.
-
-        Parameters:
-        - master_password (string): The master password used to validate access and decrypt the password.
-        - service (string): The service for which we want to retrieve and decrypt the password.
         """
         master_pass_is_correct = self._validate_master_password(master_password)
         if master_pass_is_correct:
@@ -80,13 +67,9 @@ class PasswordVault:
         else:
             print("Invalid Master Password")
 
-    def del_password(self, master_password, service):
+    def del_password(self, master_password: str, service: str):
         """
         Delete the service and its password.
-
-        Parameters:
-        - master_password (string): The master password used to validate access.
-        - service (string): The service whose password we want to delete.
         """
         master_pass_is_correct = self._validate_master_password(master_password)
         if master_pass_is_correct:
@@ -97,7 +80,11 @@ class PasswordVault:
                 with open(self.passwords_path, "wb") as file:
                     pickle.dump(data, file)
 
-    def _generate_password(self):
+    def _generate_password(self) -> str:
+        """
+        Generate a 20 character random password consisting of upper, lower, number,
+        and special characters
+        """
         password_length = 20
         char_counts = {"upper": 0, "lower": 0, "num": 0, "special": 0}
         char_groups = list(char_counts.keys())
@@ -133,54 +120,45 @@ class PasswordVault:
             if group == "special":
                 special_ascii_dec_ranges = ((33, 46), (58, 65), (91, 97), (123, 127))
                 ascii_dec = random.choice(
-                    list(range(*special_ascii_dec_ranges[0])) +
-                    list(range(*special_ascii_dec_ranges[1])) +
-                    list(range(*special_ascii_dec_ranges[2])) +
-                    list(range(*special_ascii_dec_ranges[3]))
+                    list(range(*special_ascii_dec_ranges[0]))
+                    + list(range(*special_ascii_dec_ranges[1]))
+                    + list(range(*special_ascii_dec_ranges[2]))
+                    + list(range(*special_ascii_dec_ranges[3]))
                 )
-            
+
             password += chr(ascii_dec)
             char_counts[group] -= 1
             if char_counts[group] == 0:
                 del char_groups[index]
                 num_of_valid_groups -= 1
-        
+
         return password
 
-    def _validate_master_password(self, master_password):
+    def _validate_master_password(self, master_password: str) -> bool:
+        """
+        Validate the inputed master password matches the stored master pass word.
+        """
         hashed_password_to_validate = self._hash_master_password(master_password)
         return hashed_password_to_validate == self._get_hashed_master_pass()
 
-    def _hash_master_password(self, master_password):
+    def _hash_master_password(self, master_password: str) -> bytes:
         """
         Hashes the master password for validation purposes using the sha3_256 algorithm.
-
-        Parameters:
-        - master_password (string): A string representation of an unhashed master password.
-
-        Returns:
-        - bytes: The hashed master password as bytes.
         """
         encoded_password = master_password.encode()
         hashed_password = hashlib.sha3_256(encoded_password).digest()
         return hashed_password
 
-    def _generate_salt(self):
+    def _generate_salt(self) -> bytes:
         """
         Generate a random value (salt) used with the master password to generate a derived key
         for encryption/decryption.
-
-        Returns:
-        - bytes: The generated salt as bytes.
         """
         return os.urandom(16)
 
-    def _get_master_pass_key(self, master_password, salt):
+    def _get_master_pass_key(self, master_password: str, salt: bytes) -> bytes:
         """
         Generate the derived key using the master password and stored salt.
-
-        Returns:
-        - bytes: A URL-safe Base64 encoding of the derived key.
         """
         key = hashlib.pbkdf2_hmac(
             hash_name="sha256",
@@ -191,77 +169,49 @@ class PasswordVault:
         )
         return base64.urlsafe_b64encode(key)
 
-    def _hash_service(self, service):
+    def _hash_service(self, service: str) -> bytes:
         """
         Hashes the service name using the sha256 algorithm for security purposes.
-
-        Parameters:
-        - service (string): A string representation of an unhashed service name.
-
-        Returns:
-        - bytes: The hashed service name as bytes.
         """
         encoded_service = service.encode()
         hashed_service = hashlib.sha256(encoded_service).digest()
         return hashed_service
 
-    def _encrypt_password(self, master_pass_key, password_to_encrypt):
+    def _encrypt_password(
+        self, master_pass_key: bytes, password_to_encrypt: str
+    ) -> bytes:
         """
         Encrypts the password using the provided master password key.
-
-        Parameters:
-        - master_pass_key (bytes): The derived key generated from the master password.
-        - password_to_encrypt (string): The password to be encrypted.
-
-        Returns:
-        - bytes: The encrypted password as bytes.
         """
         f = Fernet(master_pass_key)
         return f.encrypt(password_to_encrypt.encode())
 
-    def _decrypt_password(self, master_pass_key, encrypted_password):
+    def _decrypt_password(
+        self, master_pass_key: bytes, encrypted_password: bytes
+    ) -> str:
         """
         Decrypts the encrypted password using the provided master password key.
-
-        Parameters:
-        - master_pass_key (bytes): The derived key generated from the master password.
-        - encrypted_password (string): The encrypted password as a string.
-
-        Returns:
-        - string: The decrypted password as a string.
         """
         f = Fernet(master_pass_key)
         return f.decrypt(encrypted_password).decode()
 
-    def _get_hashed_master_pass(self):
+    def _get_hashed_master_pass(self) -> bytes:
         """
         Retrieve the hashed master password from the user info.
-
-        Returns:
-        - bytes: The hashed master password.
         """
         data = self._load_data_from_file(self.user_info_path)
         return data["hashed_master_pass"]
 
-    def _get_stored_salt(self):
+    def _get_stored_salt(self) -> bytes:
         """
-        Retrieve the stored salt from the user info.
-
-        Returns:
-        - bytes: The stored salt.
+        Retrieve the stored salt.
         """
         data = self._load_data_from_file(self.user_info_path)
         return data["salt"]
 
-    def _load_data_from_file(self, path):
+    def _load_data_from_file(self, path: str) -> dict:
         """
         Retrieve and unpickle data from the specified file.
-
-        Parameters:
-        - path (string): The path to the file.
-
-        Returns:
-        - dict: The unpickled data.
         """
         if not os.path.exists(path):
             data = {}
