@@ -17,6 +17,7 @@ You may encounter an error message that says: 'Pyperclip could not find a copy/p
 The py-cli-password-manager project offers the following features:
 
 - **Password Creation:** Generate strong and unique passwords for each service or website to enhance security.
+- **Password Policy Enforcement:** Prevent the user from setting woefully unsecure passwords.
 - **Password Encryption:** Encrypt passwords using the Fernet encryption scheme to protect sensitive information.
 - **Password Storage:** Store encrypted passwords securely for each service or website.
 - **Password Retrieval:** Decrypt and retrieve stored passwords when needed.
@@ -31,14 +32,16 @@ Here are some planned features for the py-cli-password-manager project:
 
 ## Using The Password Manager
 
-Currently the Password Manager supports 5 commands:
+Currently the Password Manager supports 6 commands:
 
 - `setup`: Set a master password, and generate salt. $ python main.py setup
 
-- `set`: Store a password for a service. $ python main.py set master_password service password
+- `set`: Store a password for a service. $ python main.py set master_password service
 
 - `get`: Retrieve a password for a service. $ python main.py get master_password service
 
 - `del`: Delete a service/password pair. $ python main.py del master_password service
 
 - `gen`: Generate a random password and store it. $ python main.py gen master_password service
+
+- `print`: Print data to the console. Note: This will not decrypt anything. $ python main.py print
