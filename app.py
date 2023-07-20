@@ -13,6 +13,7 @@ class App:
         self.initialize_get_cmd()
         self.initialize_del_cmd()
         self.initialize_gen_cmd()
+        self.initialize_print_cmd()
 
     def initialize_setup_cmd(self):
         self.parser_setup_cmd = self.subparsers.add_parser("setup")
@@ -60,6 +61,10 @@ class App:
         )
         self.parser_gen_cmd.set_defaults(func=self.vault.write_generated_password)
 
+    def initialize_print_cmd(self):
+         self.parser_print_cmd = self.subparsers.add_parser("print")
+         self.parser_print_cmd.set_defaults(func=self.vault.print_data)
+
     def parse_arguments(self):
         args = self.parser.parse_args()
         if hasattr(args, "func"):
@@ -85,3 +90,6 @@ class App:
                 master_password = args.master_password
                 service = args.service
                 args.func(master_password, service)
+            
+            elif args.func == self.vault.print_data:
+                args.func()

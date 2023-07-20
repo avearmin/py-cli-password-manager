@@ -103,6 +103,15 @@ class PasswordVault:
                 del data[service]
                 with open(self.passwords_path, "wb") as file:
                     pickle.dump(data, file)
+    
+    def print_data(self):
+        """
+        Print data to the console for viewing purposes.
+        """
+        user_data = self._load_data_from_file(self.user_info_path)
+        password_data = self._load_data_from_file(self.passwords_path)
+        print(user_data)
+        print(password_data)
 
     def _generate_password(self) -> str:
         """
