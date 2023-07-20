@@ -22,11 +22,14 @@ class PasswordVault:
             + f"{min_pass_len} characters, 1 uppercase, 1 lowercase "
             + "1 number, and 1 special character"
         )
+
         master_password = self._get_validated_password(min_pass_len)
+        salt = self._generate_salt()
+        salted_master_password = self._add_salt(master_password, salt)
 
         data = self._load_data_from_file(self.user_info_path)
-        data["hashed_master_pass"] = self._hash_master_password(master_password)
-        data["salt"] = self._generate_salt()
+        data["salt"] = salt
+        data["master_pass"] = self._hash_master_password(salted_master_password)
         with open(self.user_info_path, "wb") as file:
             pickle.dump(data, file)
 
@@ -39,8 +42,8 @@ class PasswordVault:
             min_pass_len = 8
             print(
                 "Create a password with at least:\n"
-                + f"{min_pass_len} characters, 1 uppercase, 1 lowercase"
-                + "   1 number, and 1 special character"
+                + f"{min_pass_len} characters, 1 uppercase, 1 lowercase "
+                + "1 number, and 1 special character"
             )
             password = self._get_validated_password(min_pass_len)
             salt = self._get_stored_salt()
@@ -163,7 +166,11 @@ class PasswordVault:
         """
         Validate the inputed master password matches the stored master pass word.
         """
-        hashed_password_to_validate = self._hash_master_password(master_password)
+        salt = self._get_stored_salt()
+        salted_master_password_to_validate = self._add_salt(master_password, salt)
+        hashed_password_to_validate = self._hash_master_password(
+            salted_master_password_to_validate
+        )
         return hashed_password_to_validate == self._get_hashed_master_pass()
 
     def _hash_master_password(self, master_password: str) -> bytes:
@@ -180,6 +187,13 @@ class PasswordVault:
         for encryption/decryption.
         """
         return os.urandom(16)
+    
+    def _add_salt(self, password: str, salt: bytes) -> str:
+        """
+        Add salt to the password.
+        """
+        salt_as_str = base64.b64encode(salt).decode()
+        return password + salt_as_str
 
     def _get_master_pass_key(self, master_password: str, salt: bytes) -> bytes:
         """
@@ -225,7 +239,7 @@ class PasswordVault:
         Retrieve the hashed master password from the user info.
         """
         data = self._load_data_from_file(self.user_info_path)
-        return data["hashed_master_pass"]
+        return data["master_pass"]
 
     def _get_stored_salt(self) -> bytes:
         """
