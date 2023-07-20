@@ -16,19 +16,33 @@ class PasswordVault:
         Initialize user data used for validating master passwords and storing
         salt to generate derived keys for encryption/decryption.
         """
+        min_pass_len = 12
+        print(
+            "Create a master password with at least:\n"
+            + f"{min_pass_len} characters, 1 uppercase, 1 lowercase "
+            + "1 number, and 1 special character"
+        )
+        master_password = self._get_validated_password(min_pass_len)
+
         data = self._load_data_from_file(self.user_info_path)
-        master_password = input("Enter a Master Password:\n")
         data["hashed_master_pass"] = self._hash_master_password(master_password)
         data["salt"] = self._generate_salt()
         with open(self.user_info_path, "wb") as file:
             pickle.dump(data, file)
 
-    def write_password(self, master_password: str, service: str, password: str):
+    def write_password(self, master_password: str, service: str):
         """
         Write an encrypted password with its intended service to the file.
         """
         master_pass_is_correct = self._validate_master_password(master_password)
         if master_pass_is_correct:
+            min_pass_len = 8
+            print(
+                "Create a password with at least:\n"
+                + f"{min_pass_len} characters, 1 uppercase, 1 lowercase"
+                + "   1 number, and 1 special character"
+            )
+            password = self._get_validated_password(min_pass_len)
             salt = self._get_stored_salt()
             master_pass_key = self._get_master_pass_key(master_password, salt)
             data = self._load_data_from_file(self.passwords_path)
@@ -44,8 +58,19 @@ class PasswordVault:
         """
         Write an encrypted randomly generated password with its intended service to the file.
         """
-        generated_password = self._generate_password()
-        self.write_password(master_password, service, generated_password)
+        master_pass_is_correct = self._validate_master_password(master_password)
+        if master_pass_is_correct:
+            password = self._generate_password()
+            salt = self._get_stored_salt()
+            master_pass_key = self._get_master_pass_key(master_password, salt)
+            data = self._load_data_from_file(self.passwords_path)
+            encrypted_password = self._encrypt_password(master_pass_key, password)
+            hashed_service = self._hash_service(service)
+            data[hashed_service] = encrypted_password
+            with open(self.passwords_path, "wb") as file:
+                pickle.dump(data, file)
+        else:
+            print("Invalid Master Password")
 
     def get_password(self, master_password: str, service: str):
         """
@@ -219,3 +244,69 @@ class PasswordVault:
             with open(path, "rb") as file:
                 data = pickle.load(file)
         return data
+
+    def _get_validated_password(self, min_pass_len) -> str:
+        """
+        Continuously prompt the user until a validated password can be returned.
+        """
+        while True:
+            password = input()
+            is_password_valid = self._validate_password_criteria(password, min_pass_len)
+            if is_password_valid:
+                return password
+            print(
+                "Requirements not met. You need at least:\n"
+                + f"{min_pass_len} characters, 1 uppercase, 1 lowercase, "
+                + "1 number, and 1 special character"
+            )
+
+    def _validate_password_criteria(self, password: str, min_pass_len: int) -> bool:
+        """
+        Validate the password has at least: min_len or more characters,
+        1 uppercase letter, 1 lowercase letter, 1 number, and
+        1 special character.
+        """
+        return (
+            len(password) >= min_pass_len
+            and self._has_upper(password)
+            and self._has_lower(password)
+            and self._has_number(password)
+            and self._has_special_character(password)
+        )
+
+    def _has_upper(self, password: str) -> bool:
+        """
+        Validate the password has at least 1 uppercase letter.
+        """
+        for char in password:
+            if char.isalpha() and char.isupper():
+                return True
+        return False
+
+    def _has_lower(self, password: str) -> bool:
+        """
+        Validate the password has at least 1 lowercase letter.
+        """
+        for char in password:
+            if char.isalpha() and char.islower():
+                return True
+        return False
+
+    def _has_number(self, password):
+        """
+        Validate the password has at least 1 number.
+        """
+        for char in password:
+            if char.isnumeric():
+                return True
+        return False
+
+    def _has_special_character(self, password: str) -> bool:
+        """
+        Validate the password has at least 1 special character.
+        """
+        special_chars = "~`!@#$%^&*()_-+={}[]\\|:;\"'<>,.?/"
+        for char in password:
+            if char in special_chars:
+                return True
+        return False

@@ -26,9 +26,6 @@ class App:
         self.parser_set_cmd.add_argument(
             "service", type=str, help="The service you wish to pair the password with"
         )
-        self.parser_set_cmd.add_argument(
-            "password", type=str, help="The password you want to set"
-        )
         self.parser_set_cmd.set_defaults(func=self.vault.write_password)
 
     def initialize_get_cmd(self):
@@ -72,8 +69,7 @@ class App:
             elif args.func == self.vault.write_password:
                 master_password = args.master_password
                 service = args.service
-                password = args.password
-                args.func(master_password, service, password)
+                args.func(master_password, service)
 
             elif args.func == self.vault.get_password:
                 master_password = args.master_password
