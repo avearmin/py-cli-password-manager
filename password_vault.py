@@ -32,6 +32,7 @@ class PasswordVault:
         data["master_pass"] = self._hash_master_password(salted_master_password)
         with open(self.user_info_path, "wb") as file:
             pickle.dump(data, file)
+        print("Master password, and salt have been successfully saved.")
 
     def write_password(self, master_password: str, service: str):
         """
@@ -53,6 +54,7 @@ class PasswordVault:
             data[service] = encrypted_password
             with open(self.passwords_path, "wb") as file:
                 pickle.dump(data, file)
+            print(f"{service} has been successfully saved.")
         else:
             print("Invalid Master Password")
 
@@ -70,6 +72,8 @@ class PasswordVault:
             data[service] = encrypted_password
             with open(self.passwords_path, "wb") as file:
                 pickle.dump(data, file)
+            print(f"A random password for {service} has been successfully saved.")
+            
         else:
             print("Invalid Master Password")
 
@@ -89,6 +93,8 @@ class PasswordVault:
                 )
                 pyperclip.copy(decryped_password)
                 print("Copied password to clipboard")
+            else:
+                print(f"{service} not found.")
         else:
             print("Invalid Master Password")
 
@@ -103,6 +109,11 @@ class PasswordVault:
                 del data[service]
                 with open(self.passwords_path, "wb") as file:
                     pickle.dump(data, file)
+                print(f"{service} has been successfully deleted.")
+            else:
+                print(f"{service} not found.")
+        else:
+            print("Invalid Master Password")
     
     def print_data(self):
         """
