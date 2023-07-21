@@ -108,10 +108,19 @@ class PasswordVault:
         """
         Print data to the console for viewing purposes.
         """
-        user_data = self._load_data_from_file(self.user_info_path)
-        password_data = self._load_data_from_file(self.passwords_path)
-        print(user_data)
-        print(password_data)
+        if os.path.exists(self.user_info_path):
+            user_data = self._load_data_from_file(self.user_info_path)
+            for key, value in user_data.items():
+                print(f"{key}: {value}")
+        else:
+            print("User info data not found.")
+        
+        if os.path.exists(self.passwords_path):
+            password_data = self._load_data_from_file(self.passwords_path)
+            for key, value in password_data.items():
+                print(f"{key}: {value}")
+        else:
+            print("Password data not found.")
 
     def _generate_password(self) -> str:
         """
