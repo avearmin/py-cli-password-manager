@@ -37,7 +37,7 @@ class App:
         self.parser_get_cmd.add_argument(
             "service", type=str, help="The service whose password you want to get"
         )
-        self.parser_get_cmd.set_defaults(func=self.vault.get_password)
+        self.parser_get_cmd.set_defaults(func=self.vault.get_and_copy_password)
 
     def initialize_del_cmd(self):
         self.parser_del_cmd = self.subparsers.add_parser("del")
@@ -76,7 +76,7 @@ class App:
                 service = args.service
                 args.func(master_password, service)
 
-            elif args.func == self.vault.get_password:
+            elif args.func == self.vault.get_and_copy_password:
                 master_password = args.master_password
                 service = args.service
                 args.func(master_password, service)

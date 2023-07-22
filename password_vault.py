@@ -55,18 +55,9 @@ class PasswordVault:
                 + "1 number, and 1 special character"
             )
             password = self._wait_for_validated_password(min_pass_len)
-            salt = self._load_salt_from_data()
-            master_pass_key = PasswordEncrypter.get_master_pass_key(
-                master_password, salt
-            )
-            data = self._load_data_from_file(self.passwords_path)
-            encrypted_password = PasswordEncrypter.encrypt_password(
-                master_pass_key, password
-            )
-            data[service] = encrypted_password
-            with open(self.passwords_path, "wb") as file:
-                pickle.dump(data, file)
-            print(f"{service} has been successfully saved.")
+            encrypted_password = self._encrypt_password(master_password, password)
+            self._save_encrypted_password(service, encrypted_password)
+            print(f"a password for {service} has been successfully saved.")
         else:
             print("Invalid Master Password")
 
@@ -79,21 +70,33 @@ class PasswordVault:
             password_length = 20
             generator = PasswordGenerator(password_length)
             password = generator.generate()
-            salt = self._load_salt_from_data()
-            master_pass_key = PasswordEncrypter.get_master_pass_key(
-                master_password, salt
-            )
-            data = self._load_data_from_file(self.passwords_path)
-            encrypted_password = PasswordEncrypter.encrypt_password(
-                master_pass_key, password
-            )
-            data[service] = encrypted_password
-            with open(self.passwords_path, "wb") as file:
-                pickle.dump(data, file)
+            encrypted_password = self._encrypt_password(master_password, password)
+            self._save_encrypted_password(service, encrypted_password)
             print(f"A random password for {service} has been successfully saved.")
-
         else:
             print("Invalid Master Password")
+
+    def _encrypt_password(
+        self, master_password: str, unencrypted_password: str
+    ) -> bytes:
+        """
+        Encrypt the given encrypted password using the master password.
+        """
+        salt = self._load_salt_from_data()
+        master_pass_key = PasswordEncrypter.get_master_pass_key(master_password, salt)
+        encryped_password = PasswordEncrypter.encrypt_password(
+            master_pass_key, unencrypted_password
+        )
+        return encryped_password
+
+    def _save_encrypted_password(self, service: str, encrypted_password: bytes):
+        """
+        Save the encrypted password for the given service from data.
+        """
+        data = self._load_data_from_file(self.passwords_path)
+        data[service] = encrypted_password
+        with open(self.passwords_path, "wb") as file:
+            pickle.dump(data, file)
 
     def get_and_copy_password(self, master_password: str, service: str):
         """
@@ -102,7 +105,9 @@ class PasswordVault:
         if self._verify_master_password(master_password):
             encrypted_password = self._load_encrypted_password(service)
             if encrypted_password:
-                decrypted_password = self._decrypt_password(master_password, encrypted_password)
+                decrypted_password = self._decrypt_password(
+                    master_password, encrypted_password
+                )
                 pyperclip.copy(decrypted_password)
                 print("Copied password to clipboard")
             else:
@@ -117,15 +122,13 @@ class PasswordVault:
         data = self._load_data_from_file(self.passwords_path)
         if service in data:
             return data[service]
-        
+
     def _decrypt_password(self, master_password: str, encrypted_password: bytes) -> str:
         """
         Decrypt the given encrypted password using the master password.
         """
         salt = self._load_salt_from_data()
-        master_pass_key = PasswordEncrypter.get_master_pass_key(
-            master_password, salt
-        )
+        master_pass_key = PasswordEncrypter.get_master_pass_key(master_password, salt)
         decryped_password = PasswordEncrypter.decrypt_password(
             master_pass_key, encrypted_password
         )
