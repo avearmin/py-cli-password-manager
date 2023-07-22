@@ -75,7 +75,9 @@ class PasswordVault:
         """
         master_pass_is_correct = self._validate_master_password(master_password)
         if master_pass_is_correct:
-            password = PasswordGenerator.generate_password()
+            password_length = 20
+            generator = PasswordGenerator(password_length)
+            password = generator.generate()
             salt = self._get_stored_salt()
             master_pass_key = PasswordEncryption.get_master_pass_key(
                 master_password, salt
