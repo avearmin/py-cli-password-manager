@@ -77,8 +77,3 @@ class PasswordGenerator:
                 num_of_valid_groups -= 1
 
         return password
-        
-p = PasswordGenerator(20)
-pw = p.generate()
-
-print(pw)
