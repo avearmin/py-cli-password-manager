@@ -95,28 +95,41 @@ class PasswordVault:
         else:
             print("Invalid Master Password")
 
-    def get_password(self, master_password: str, service: str):
+    def get_and_copy_password(self, master_password: str, service: str):
         """
-        Get and decrypt the desired password.
+        Get and copy the decrypted password.
         """
-        master_pass_is_correct = self._verify_master_password(master_password)
-        if master_pass_is_correct:
-            salt = self._load_salt_from_data()
-            master_pass_key = PasswordEncrypter.get_master_pass_key(
-                master_password, salt
-            )
-            data = self._load_data_from_file(self.passwords_path)
-            if service in data:
-                encrypted_password = data[service]
-                decryped_password = PasswordEncrypter.decrypt_password(
-                    master_pass_key, encrypted_password
-                )
-                pyperclip.copy(decryped_password)
+        if self._verify_master_password(master_password):
+            encrypted_password = self._load_encrypted_password(service)
+            if encrypted_password:
+                decrypted_password = self._decrypt_password(master_password, encrypted_password)
+                pyperclip.copy(decrypted_password)
                 print("Copied password to clipboard")
             else:
-                print(f"{service} not found.")
+                print(f"password for {service} not found.")
         else:
             print("Invalid Master Password")
+
+    def _load_encrypted_password(self, service: str) -> str or None:
+        """
+        Load the encrypted password for the given service from data.
+        """
+        data = self._load_data_from_file(self.passwords_path)
+        if service in data:
+            return data[service]
+        
+    def _decrypt_password(self, master_password: str, encrypted_password: bytes) -> str:
+        """
+        Decrypt the given encrypted password using the master password.
+        """
+        salt = self._load_salt_from_data()
+        master_pass_key = PasswordEncrypter.get_master_pass_key(
+            master_password, salt
+        )
+        decryped_password = PasswordEncrypter.decrypt_password(
+            master_pass_key, encrypted_password
+        )
+        return decryped_password
 
     def del_password(self, master_password: str, service: str):
         """
