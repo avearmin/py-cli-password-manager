@@ -1,4 +1,4 @@
-class PasswordValidation:
+class PasswordValidator:
     """
     A class for validating passwords against specified criteria.
     """

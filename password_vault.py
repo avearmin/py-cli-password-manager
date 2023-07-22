@@ -1,6 +1,6 @@
-from password_encryption import PasswordEncryption
+from password_encryption import PasswordEncrypter
 from password_generator import PasswordGenerator
-from password_validation import PasswordValidation
+from password_validation import PasswordValidator
 import os, pickle, pyperclip
 
 
@@ -8,6 +8,7 @@ class PasswordVault:
     """
     A class to securely manage and store encrypted passwords.
     """
+
     def __init__(self):
         """
         Initialize a PasswordVault object whose data members contain paths to
@@ -28,13 +29,13 @@ class PasswordVault:
             + "1 number, and 1 special character"
         )
 
-        master_password = self._get_validated_password(min_pass_len)
-        salt = PasswordEncryption.generate_salt()
-        salted_master_password = PasswordEncryption.add_salt(master_password, salt)
+        master_password = self._wait_for_validated_password(min_pass_len)
+        salt = PasswordEncrypter.generate_salt()
+        salted_master_password = PasswordEncrypter.add_salt(master_password, salt)
 
         data = self._load_data_from_file(self.user_info_path)
         data["salt"] = salt
-        data["master_pass"] = PasswordEncryption.hash_master_password(
+        data["master_pass"] = PasswordEncrypter.hash_master_password(
             salted_master_password
         )
         with open(self.user_info_path, "wb") as file:
@@ -45,7 +46,7 @@ class PasswordVault:
         """
         Write an encrypted password with its intended service to the file.
         """
-        master_pass_is_correct = self._validate_master_password(master_password)
+        master_pass_is_correct = self._verify_master_password(master_password)
         if master_pass_is_correct:
             min_pass_len = 8
             print(
@@ -53,13 +54,13 @@ class PasswordVault:
                 + f"{min_pass_len} characters, 1 uppercase, 1 lowercase "
                 + "1 number, and 1 special character"
             )
-            password = self._get_validated_password(min_pass_len)
-            salt = self._get_stored_salt()
-            master_pass_key = PasswordEncryption.get_master_pass_key(
+            password = self._wait_for_validated_password(min_pass_len)
+            salt = self._load_salt_from_data()
+            master_pass_key = PasswordEncrypter.get_master_pass_key(
                 master_password, salt
             )
             data = self._load_data_from_file(self.passwords_path)
-            encrypted_password = PasswordEncryption.encrypt_password(
+            encrypted_password = PasswordEncrypter.encrypt_password(
                 master_pass_key, password
             )
             data[service] = encrypted_password
@@ -73,17 +74,17 @@ class PasswordVault:
         """
         Write an encrypted randomly generated password with its intended service to the file.
         """
-        master_pass_is_correct = self._validate_master_password(master_password)
+        master_pass_is_correct = self._verify_master_password(master_password)
         if master_pass_is_correct:
             password_length = 20
             generator = PasswordGenerator(password_length)
             password = generator.generate()
-            salt = self._get_stored_salt()
-            master_pass_key = PasswordEncryption.get_master_pass_key(
+            salt = self._load_salt_from_data()
+            master_pass_key = PasswordEncrypter.get_master_pass_key(
                 master_password, salt
             )
             data = self._load_data_from_file(self.passwords_path)
-            encrypted_password = PasswordEncryption.encrypt_password(
+            encrypted_password = PasswordEncrypter.encrypt_password(
                 master_pass_key, password
             )
             data[service] = encrypted_password
@@ -98,16 +99,16 @@ class PasswordVault:
         """
         Get and decrypt the desired password.
         """
-        master_pass_is_correct = self._validate_master_password(master_password)
+        master_pass_is_correct = self._verify_master_password(master_password)
         if master_pass_is_correct:
-            salt = self._get_stored_salt()
-            master_pass_key = PasswordEncryption.get_master_pass_key(
+            salt = self._load_salt_from_data()
+            master_pass_key = PasswordEncrypter.get_master_pass_key(
                 master_password, salt
             )
             data = self._load_data_from_file(self.passwords_path)
             if service in data:
                 encrypted_password = data[service]
-                decryped_password = PasswordEncryption.decrypt_password(
+                decryped_password = PasswordEncrypter.decrypt_password(
                     master_pass_key, encrypted_password
                 )
                 pyperclip.copy(decryped_password)
@@ -121,7 +122,7 @@ class PasswordVault:
         """
         Delete the service and its password.
         """
-        master_pass_is_correct = self._validate_master_password(master_password)
+        master_pass_is_correct = self._verify_master_password(master_password)
         if master_pass_is_correct:
             data = self._load_data_from_file(self.passwords_path)
             if service in data:
@@ -152,20 +153,16 @@ class PasswordVault:
         else:
             print("Password data not found.")
 
-    def _validate_master_password(self, master_password: str) -> bool:
+    def _verify_master_password(self, master_password: str) -> bool:
         """
-        Validate the inputed master password matches the stored master pass word.
+        Verify the inputed master password matches the stored master password.
         """
-        salt = self._get_stored_salt()
-        salted_master_password_to_validate = PasswordEncryption.add_salt(
-            master_password, salt
-        )
-        hashed_password_to_validate = PasswordEncryption.hash_master_password(
-            salted_master_password_to_validate
-        )
-        return hashed_password_to_validate == self._get_hashed_master_pass()
+        salt = self._load_salt_from_data()
+        salted_master_password = PasswordEncrypter.add_salt(master_password, salt)
+        hashed_password = PasswordEncrypter.hash_master_password(salted_master_password)
+        return hashed_password == self._load_master_pass_from_data()
 
-    def _get_validated_password(self, min_pass_len) -> str:
+    def _wait_for_validated_password(self, min_pass_len) -> str:
         """
         Continuously prompt the user until a validated password can be returned.
         """
@@ -175,7 +172,7 @@ class PasswordVault:
         min_special = 1
         while True:
             password = input()
-            validator = PasswordValidation(
+            validator = PasswordValidator(
                 min_pass_len, min_upper, min_lower, min_num, min_special
             )
             is_password_valid = validator.validate(password)
@@ -187,14 +184,14 @@ class PasswordVault:
                 + "1 number, and 1 special character"
             )
 
-    def _get_hashed_master_pass(self) -> bytes:
+    def _load_master_pass_from_data(self) -> bytes:
         """
         Retrieve the hashed master password from the user info.
         """
         data = self._load_data_from_file(self.user_info_path)
         return data["master_pass"]
 
-    def _get_stored_salt(self) -> bytes:
+    def _load_salt_from_data(self) -> bytes:
         """
         Retrieve the stored salt.
         """

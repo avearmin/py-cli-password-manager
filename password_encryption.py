@@ -4,7 +4,7 @@ import base64
 import os
 
 
-class PasswordEncryption:
+class PasswordEncrypter:
     """
     A class for handling password encryption and decryption.
     """
