@@ -5,17 +5,30 @@ class PasswordGenerator:
     """
     A class for generating strong and secure random passwords.
     """
-    @staticmethod
-    def generate_password() -> str:
+
+    def __init__(self, pass_len):
+        """
+        Initialize a PasswordGenerator object with a reference to desired password length.
+        """
+        self.password_length = pass_len
+
+    def generate(self) -> str:
         """
         Generate a 20 character random password consisting of upper, lower, number,
         and special characters
         """
-        password_length = 20
+        char_counts = self._get_char_counts()
+        password = self.build_password(char_counts)
+        return password
+
+    def _get_char_counts(self) -> dict:
+        """
+        Get a dict with random character counts.
+        """
         char_counts = {"upper": 0, "lower": 0, "num": 0, "special": 0}
         char_groups = list(char_counts.keys())
 
-        num_chars_left = password_length
+        num_chars_left = self.password_length
         num_of_valid_groups = 4
         while num_of_valid_groups != 1:
             index = random.randrange(0, num_of_valid_groups)
@@ -30,10 +43,16 @@ class PasswordGenerator:
             num_of_valid_groups -= 1
         char_counts[char_groups[0]] = num_chars_left
 
+        return char_counts
+
+    def build_password(self, char_counts: dict) -> str:
+        """
+        Build a password with the amount of characters from char_counts.
+        """
         char_groups = list(char_counts.keys())
         password = ""
         num_of_valid_groups = 4
-        for i in range(password_length):
+        for i in range(self.password_length):
             index = random.randrange(0, num_of_valid_groups)
             group = char_groups[index]
 
@@ -46,11 +65,10 @@ class PasswordGenerator:
             if group == "special":
                 special_ascii_dec_ranges = ((33, 46), (58, 65), (91, 97), (123, 127))
                 ascii_dec = random.choice(
-                    list(range(*special_ascii_dec_ranges[0]))
-                    + list(range(*special_ascii_dec_ranges[1]))
-                    + list(range(*special_ascii_dec_ranges[2]))
-                    + list(range(*special_ascii_dec_ranges[3]))
-                )
+                    list(range(*special_ascii_dec_ranges[0])) +
+                    list(range(*special_ascii_dec_ranges[1])) +
+                    list(range(*special_ascii_dec_ranges[2])) +
+                    list(range(*special_ascii_dec_ranges[3])))
 
             password += chr(ascii_dec)
             char_counts[group] -= 1
@@ -59,3 +77,8 @@ class PasswordGenerator:
                 num_of_valid_groups -= 1
 
         return password
+        
+p = PasswordGenerator(20)
+pw = p.generate()
+
+print(pw)
