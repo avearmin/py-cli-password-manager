@@ -8,7 +8,9 @@ class PasswordVault:
     """
     A class to securely manage and store encrypted passwords.
     """
-
+    
+    # --- Constructors and Initialization Methods ---
+    
     def __init__(self):
         """
         Initialize a PasswordVault object whose data members contain paths to
@@ -34,6 +36,19 @@ class PasswordVault:
         salted_master_password = PasswordEncrypter.add_salt(master_password, salt)
         self._save_user_info(salted_master_password, salt)
         print("Master password, and salt have been successfully saved.")
+    
+    # --- Utility Methods for Data Manipulation ---
+    
+    def _load_data_from_file(self, path: str) -> dict:
+        """
+        Retrieve and unpickle data from the specified file.
+        """
+        if not os.path.exists(path):
+            data = {}
+        else:
+            with open(path, "rb") as file:
+                data = pickle.load(file)
+        return data
         
     def _save_user_info(salted_master_password: str, salt: bytes):
         """
@@ -46,6 +61,87 @@ class PasswordVault:
         )
         with open(self.user_info_path, "wb") as file:
             pickle.dump(data, file)
+    
+    def _save_encrypted_password(self, service: str, encrypted_password: bytes):
+        """
+        Save the encrypted password for the given service from data.
+        """
+        data = self._load_data_from_file(self.passwords_path)
+        data[service] = encrypted_password
+        with open(self.passwords_path, "wb") as file:
+            pickle.dump(data, file)
+            
+    def _load_encrypted_password(self, service: str) -> str or None:
+        """
+        Load the encrypted password for the given service from data.
+        """
+        data = self._load_data_from_file(self.passwords_path)
+        if service in data:
+            return data[service]
+            
+    def _load_master_pass_from_data(self) -> bytes:
+        """
+        Retrieve the hashed master password from the user info.
+        """
+        data = self._load_data_from_file(self.user_info_path)
+        return data["master_pass"]
+
+    def _load_salt_from_data(self) -> bytes:
+        """
+        Retrieve the stored salt.
+        """
+        data = self._load_data_from_file(self.user_info_path)
+        return data["salt"]
+
+    # --- Password Management Methods ---
+    
+    def _encrypt_password(
+        self, master_password: str, unencrypted_password: str
+    ) -> bytes:
+        """
+        Encrypt the given encrypted password using the master password.
+        """
+        salt = self._load_salt_from_data()
+        master_pass_key = PasswordEncrypter.get_master_pass_key(master_password, salt)
+        encryped_password = PasswordEncrypter.encrypt_password(
+            master_pass_key, unencrypted_password
+        )
+        return encryped_password
+        
+    def _decrypt_password(self, master_password: str, encrypted_password: bytes) -> str:
+        """
+        Decrypt the given encrypted password using the master password.
+        """
+        salt = self._load_salt_from_data()
+        master_pass_key = PasswordEncrypter.get_master_pass_key(master_password, salt)
+        decryped_password = PasswordEncrypter.decrypt_password(
+            master_pass_key, encrypted_password
+        )
+        return decryped_password
+    
+    def _wait_for_validated_password(self, min_pass_len) -> str:
+        """
+        Continuously prompt the user until a validated password can be returned.
+        """
+        min_upper = 1
+        min_lower = 1
+        min_num = 1
+        min_special = 1
+        while True:
+            password = input()
+            validator = PasswordValidator(
+                min_pass_len, min_upper, min_lower, min_num, min_special
+            )
+            is_password_valid = validator.validate(password)
+            if is_password_valid:
+                return password
+            print(
+                "Requirements not met. You need at least:\n"
+                + f"{min_pass_len} characters, 1 uppercase, 1 lowercase, "
+                + "1 number, and 1 special character"
+            )
+            
+    # --- Password Operations Methods ---
 
     def write_password(self, master_password: str, service: str):
         """
@@ -81,28 +177,6 @@ class PasswordVault:
         else:
             print("Invalid Master Password")
 
-    def _encrypt_password(
-        self, master_password: str, unencrypted_password: str
-    ) -> bytes:
-        """
-        Encrypt the given encrypted password using the master password.
-        """
-        salt = self._load_salt_from_data()
-        master_pass_key = PasswordEncrypter.get_master_pass_key(master_password, salt)
-        encryped_password = PasswordEncrypter.encrypt_password(
-            master_pass_key, unencrypted_password
-        )
-        return encryped_password
-
-    def _save_encrypted_password(self, service: str, encrypted_password: bytes):
-        """
-        Save the encrypted password for the given service from data.
-        """
-        data = self._load_data_from_file(self.passwords_path)
-        data[service] = encrypted_password
-        with open(self.passwords_path, "wb") as file:
-            pickle.dump(data, file)
-
     def get_and_copy_password(self, master_password: str, service: str):
         """
         Get and copy the decrypted password.
@@ -119,25 +193,6 @@ class PasswordVault:
                 print(f"password for {service} not found.")
         else:
             print("Invalid Master Password")
-
-    def _load_encrypted_password(self, service: str) -> str or None:
-        """
-        Load the encrypted password for the given service from data.
-        """
-        data = self._load_data_from_file(self.passwords_path)
-        if service in data:
-            return data[service]
-
-    def _decrypt_password(self, master_password: str, encrypted_password: bytes) -> str:
-        """
-        Decrypt the given encrypted password using the master password.
-        """
-        salt = self._load_salt_from_data()
-        master_pass_key = PasswordEncrypter.get_master_pass_key(master_password, salt)
-        decryped_password = PasswordEncrypter.decrypt_password(
-            master_pass_key, encrypted_password
-        )
-        return decryped_password
 
     def del_password(self, master_password: str, service: str):
         """
@@ -182,50 +237,3 @@ class PasswordVault:
         salted_master_password = PasswordEncrypter.add_salt(master_password, salt)
         hashed_password = PasswordEncrypter.hash_master_password(salted_master_password)
         return hashed_password == self._load_master_pass_from_data()
-
-    def _wait_for_validated_password(self, min_pass_len) -> str:
-        """
-        Continuously prompt the user until a validated password can be returned.
-        """
-        min_upper = 1
-        min_lower = 1
-        min_num = 1
-        min_special = 1
-        while True:
-            password = input()
-            validator = PasswordValidator(
-                min_pass_len, min_upper, min_lower, min_num, min_special
-            )
-            is_password_valid = validator.validate(password)
-            if is_password_valid:
-                return password
-            print(
-                "Requirements not met. You need at least:\n"
-                + f"{min_pass_len} characters, 1 uppercase, 1 lowercase, "
-                + "1 number, and 1 special character"
-            )
-
-    def _load_master_pass_from_data(self) -> bytes:
-        """
-        Retrieve the hashed master password from the user info.
-        """
-        data = self._load_data_from_file(self.user_info_path)
-        return data["master_pass"]
-
-    def _load_salt_from_data(self) -> bytes:
-        """
-        Retrieve the stored salt.
-        """
-        data = self._load_data_from_file(self.user_info_path)
-        return data["salt"]
-
-    def _load_data_from_file(self, path: str) -> dict:
-        """
-        Retrieve and unpickle data from the specified file.
-        """
-        if not os.path.exists(path):
-            data = {}
-        else:
-            with open(path, "rb") as file:
-                data = pickle.load(file)
-        return data
