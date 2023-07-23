@@ -53,6 +53,23 @@ Replace /path/to/py-cli-password-manager with the actual path to the directory w
 source ~/.bashrc
 ```
 
+### Troubleshooting: Permission Denied Error
+
+If you encounter a "permission denied" error when trying to run the Password Manager, it might be due to the lack of execution permissions on the `main.py` file. To resolve this issue, follow these steps:
+
+Open your terminal or command prompt. Navigate to the directory where the `main.py` file is located using the `cd` command:
+```bash
+cd/path/to/py-cli-password-manager
+   ```
+Check the current permissions on the `main.py` file using the `ls -l` command:
+```bash
+ls -l main.py
+```
+Ensure that the file has the necessary execution permissions. If it doesn't, you can add them using the chmod command:
+```bash
+chmod +x main.py
+```
+
 ## Features
 
 The py-cli-password-manager project offers the following features:
