@@ -141,6 +141,15 @@ class PasswordVault:
                 + "1 number, and 1 special character"
             )
             
+    def _verify_master_password(self, master_password: str) -> bool:
+        """
+        Verify the inputed master password matches the stored master password.
+        """
+        salt = self._load_salt_from_data()
+        salted_master_password = PasswordEncrypter.add_salt(master_password, salt)
+        hashed_password = PasswordEncrypter.hash_master_password(salted_master_password)
+        return hashed_password == self._load_master_pass_from_data()
+            
     # --- Password Operations Methods ---
 
     def write_password(self, master_password: str, service: str):
@@ -228,12 +237,3 @@ class PasswordVault:
                 print(f"{key}: {value}")
         else:
             print("Password data not found.")
-
-    def _verify_master_password(self, master_password: str) -> bool:
-        """
-        Verify the inputed master password matches the stored master password.
-        """
-        salt = self._load_salt_from_data()
-        salted_master_password = PasswordEncrypter.add_salt(master_password, salt)
-        hashed_password = PasswordEncrypter.hash_master_password(salted_master_password)
-        return hashed_password == self._load_master_pass_from_data()
