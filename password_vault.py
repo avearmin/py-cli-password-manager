@@ -32,7 +32,13 @@ class PasswordVault:
         master_password = self._wait_for_validated_password(min_pass_len)
         salt = PasswordEncrypter.generate_salt()
         salted_master_password = PasswordEncrypter.add_salt(master_password, salt)
-
+        self._save_user_info(salted_master_password, salt)
+        print("Master password, and salt have been successfully saved.")
+        
+    def _save_user_info(salted_master_password: str, salt: bytes):
+        """
+        Save the hashed master password, and salt to data.
+        """
         data = self._load_data_from_file(self.user_info_path)
         data["salt"] = salt
         data["master_pass"] = PasswordEncrypter.hash_master_password(
@@ -40,7 +46,6 @@ class PasswordVault:
         )
         with open(self.user_info_path, "wb") as file:
             pickle.dump(data, file)
-        print("Master password, and salt have been successfully saved.")
 
     def write_password(self, master_password: str, service: str):
         """
