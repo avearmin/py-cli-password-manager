@@ -50,7 +50,7 @@ class PasswordVault:
                 data = pickle.load(file)
         return data
         
-    def _save_user_info(salted_master_password: str, salt: bytes):
+    def _save_user_info(self, salted_master_password: str, salt: bytes):
         """
         Save the hashed master password, and salt to data.
         """
