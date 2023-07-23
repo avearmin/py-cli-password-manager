@@ -16,8 +16,10 @@ class PasswordVault:
         Initialize a PasswordVault object whose data members contain paths to
         where passwords and user information are stored.
         """
-        self.user_info_path = os.path.join(os.getcwd(), "user_info.bin")
-        self.passwords_path = os.path.join(os.getcwd(), "passwords.bin")
+        code_dir = os.path.dirname(os.path.abspath(__file__))
+        
+        self.user_info_path = os.path.join(code_dir, "user_info.bin")
+        self.passwords_path = os.path.join(code_dir, "passwords.bin")
 
     def initialize_user(self):
         """
