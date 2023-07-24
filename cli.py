@@ -2,7 +2,7 @@ from argparse import ArgumentParser
 from password_vault import PasswordVault
 
 
-class App:
+class CLI:
     def __init__(self):
         self.vault = PasswordVault()
         self.parser = ArgumentParser()

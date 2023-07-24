@@ -1,4 +1,4 @@
-from app import App
+from cli import CLI
 
-app = App()
-app.parse_arguments()
+cli = CLI()
+cli.parse_arguments()
