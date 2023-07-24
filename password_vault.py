@@ -1,6 +1,7 @@
 from password_encryption import PasswordEncrypter
 from password_generator import PasswordGenerator
 from password_validation import PasswordValidator
+from getpass import getpass
 import os, pickle, pyperclip
 
 
@@ -130,7 +131,7 @@ class PasswordVault:
         min_num = 1
         min_special = 1
         while True:
-            password = input()
+            password = getpass()
             validator = PasswordValidator(
                 min_pass_len, min_upper, min_lower, min_num, min_special
             )
@@ -154,10 +155,11 @@ class PasswordVault:
             
     # --- Password Operations Methods ---
 
-    def write_password(self, master_password: str, service: str):
+    def write_password(self, service: str):
         """
         Write an encrypted password with its intended service to the file.
         """
+        master_password = getpass("Enter your master password: ")
         master_pass_is_correct = self._verify_master_password(master_password)
         if master_pass_is_correct:
             min_pass_len = 8
@@ -173,10 +175,11 @@ class PasswordVault:
         else:
             print("Invalid Master Password")
 
-    def write_generated_password(self, master_password: str, service: str):
+    def write_generated_password(self, service: str):
         """
         Write an encrypted randomly generated password with its intended service to the file.
         """
+        master_password = getpass("Enter your master password: ")
         master_pass_is_correct = self._verify_master_password(master_password)
         if master_pass_is_correct:
             password_length = 20
@@ -188,10 +191,11 @@ class PasswordVault:
         else:
             print("Invalid Master Password")
 
-    def get_and_copy_password(self, master_password: str, service: str):
+    def get_and_copy_password(self, service: str):
         """
         Get and copy the decrypted password.
         """
+        master_password = getpass("Enter your master password: ")
         if self._verify_master_password(master_password):
             encrypted_password = self._load_encrypted_password(service)
             if encrypted_password:
@@ -205,10 +209,11 @@ class PasswordVault:
         else:
             print("Invalid Master Password")
 
-    def del_password(self, master_password: str, service: str):
+    def del_password(self, service: str):
         """
         Delete the service and its password.
         """
+        master_password = getpass("Enter your master password: ")
         master_pass_is_correct = self._verify_master_password(master_password)
         if master_pass_is_correct:
             data = self._load_data_from_file(self.passwords_path)
