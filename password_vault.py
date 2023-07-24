@@ -95,6 +95,13 @@ class PasswordVault:
         """
         data = self._load_data_from_file(self.user_info_path)
         return data["salt"]
+    
+    def _is_user_initialized(self):
+        data = self._load_data_from_file(self.user_info_path)
+        if "salt" not in data and "master_pass" not in data:
+            print("You must first setup the user before you can use the Password Manager")
+            return False
+        return True
 
     # --- Password Management Methods ---
     
@@ -159,6 +166,8 @@ class PasswordVault:
         """
         Write an encrypted password with its intended service to the file.
         """
+        if not self._is_user_initialized():
+            return
         master_password = getpass("Enter your master password: ")
         master_pass_is_correct = self._verify_master_password(master_password)
         if master_pass_is_correct:
@@ -179,6 +188,8 @@ class PasswordVault:
         """
         Write an encrypted randomly generated password with its intended service to the file.
         """
+        if not self._is_user_initialized():
+            return
         master_password = getpass("Enter your master password: ")
         master_pass_is_correct = self._verify_master_password(master_password)
         if master_pass_is_correct:
@@ -195,6 +206,8 @@ class PasswordVault:
         """
         Get and copy the decrypted password.
         """
+        if not self._is_user_initialized():
+            return
         master_password = getpass("Enter your master password: ")
         if self._verify_master_password(master_password):
             encrypted_password = self._load_encrypted_password(service)
@@ -213,6 +226,8 @@ class PasswordVault:
         """
         Delete the service and its password.
         """
+        if not self._is_user_initialized():
+            return
         master_password = getpass("Enter your master password: ")
         master_pass_is_correct = self._verify_master_password(master_password)
         if master_pass_is_correct:
