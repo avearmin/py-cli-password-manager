@@ -14,8 +14,7 @@ class PasswordGenerator:
 
     def generate(self) -> str:
         """
-        Generate a 20 character random password consisting of upper, lower, number,
-        and special characters
+        Generate random password consisting of upper, lower, number, and special characters
         """
         char_counts = self._get_char_counts()
         password = self.build_password(char_counts)
