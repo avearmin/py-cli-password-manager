@@ -99,22 +99,22 @@ $ your-alias setup
 
 `set`: Store a password for a service. 
 ```bash
-$ your-alias set master_password service
+$ your-alias set service
 ```
 
 `get`: Retrieve a password for a service. 
 ```bash
-$ your-alias get master_password service
+$ your-alias get service
 ```
 
 `del`: Delete a service/password pair. 
 ```bash
-$ your-alias del master_password service
+$ your-alias del service
 ```
 
 `gen`: Generate a random password and store it. 
 ```bash
-$ your-alias gen master_password service
+$ your-alias gen service
 ```
 
 `print`: Print data to the console. Note: This will not decrypt anything. 
