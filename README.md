@@ -121,3 +121,8 @@ $ your-alias gen master_password service
 ```bash
 $ your-alias print
 ```
+
+`help`: Print all available commands.
+```bash
+$ your-alias help
+```
