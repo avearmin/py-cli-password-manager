@@ -14,6 +14,7 @@ class App:
         self.initialize_del_cmd()
         self.initialize_gen_cmd()
         self.initialize_print_cmd()
+        self.initialize_help_cmd()
 
     def initialize_setup_cmd(self):
         self.parser_setup_cmd = self.subparsers.add_parser("setup")
@@ -64,6 +65,10 @@ class App:
     def initialize_print_cmd(self):
          self.parser_print_cmd = self.subparsers.add_parser("print")
          self.parser_print_cmd.set_defaults(func=self.vault.print_data)
+    
+    def initialize_help_cmd(self):
+        self.parser_help_cmd = self.subparsers.add_parser("help")
+        self.parser_help_cmd.set_defaults(func=self.vault.print_help)
 
     def parse_arguments(self):
         args = self.parser.parse_args()
@@ -92,4 +97,7 @@ class App:
                 args.func(master_password, service)
             
             elif args.func == self.vault.print_data:
+                args.func()
+            
+            elif args.func == self.vault.print_help:
                 args.func()

@@ -239,3 +239,13 @@ class PasswordVault:
                 print(f"{key}: {value}")
         else:
             print("Password data not found.")
+
+    def print_help(self):
+        print(
+            "setup: Set a master password, and generate salt.\n$ your-alias setup\n\n"
+            + "set: Store a password for a service.\n$ your-alias set service-to-set\n\n"
+            + "get: Retrieve a password for a service.\n$ your-alias get service-to-get\n\n"
+            + "del: Delete a service/password pair.\n$ your-alias del service-to-del\n\n"
+            + "gen: Generate a random password and store it.\n$ your-alias gen service-to-set\n\n"
+            + "print: Print data to the console. Note: This will not decrypt anything.\n$ your-alias print"
+        )
