@@ -90,7 +90,7 @@ Here are some planned features for the py-cli-password-manager project:
 
 ## Using The Password Manager
 
-Currently the Password Manager supports 6 commands:
+Currently the Password Manager supports 7 commands:
 
 `setup`: Set a master password, and generate salt. 
 ```bash
