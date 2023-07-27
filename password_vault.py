@@ -1,6 +1,6 @@
-from password_encryption import PasswordEncrypter
+from password_encrypter import PasswordEncrypter
 from password_generator import PasswordGenerator
-from password_validation import PasswordValidator
+from password_validator import PasswordValidator
 from getpass import getpass
 import os, pickle, pyperclip
 
