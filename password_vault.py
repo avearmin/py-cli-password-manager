@@ -169,20 +169,19 @@ class PasswordVault:
         if not self._is_user_initialized():
             return
         master_password = getpass("Enter your master password: ")
-        master_pass_is_correct = self._verify_master_password(master_password)
-        if master_pass_is_correct:
-            min_pass_len = 8
-            print(
-                "Create a password with at least:\n"
-                + f"{min_pass_len} characters, 1 uppercase, 1 lowercase "
-                + "1 number, and 1 special character"
-            )
-            password = self._wait_for_validated_password(min_pass_len)
-            encrypted_password = self._encrypt_password(master_password, password)
-            self._save_encrypted_password(service, encrypted_password)
-            print(f"a password for {service} has been successfully saved.")
-        else:
+        if not self._verify_master_password(master_password):
             print("Invalid Master Password")
+            return
+        min_pass_len = 8
+        print(
+            "Create a password with at least:\n"
+            + f"{min_pass_len} characters, 1 uppercase, 1 lowercase "
+            + "1 number, and 1 special character"
+        )
+        password = self._wait_for_validated_password(min_pass_len)
+        encrypted_password = self._encrypt_password(master_password, password)
+        self._save_encrypted_password(service, encrypted_password)
+        print(f"a password for {service} has been successfully saved.")
 
     def write_generated_password(self, service: str):
         """
@@ -191,16 +190,15 @@ class PasswordVault:
         if not self._is_user_initialized():
             return
         master_password = getpass("Enter your master password: ")
-        master_pass_is_correct = self._verify_master_password(master_password)
-        if master_pass_is_correct:
-            password_length = 20
-            generator = PasswordGenerator(password_length)
-            password = generator.generate()
-            encrypted_password = self._encrypt_password(master_password, password)
-            self._save_encrypted_password(service, encrypted_password)
-            print(f"A random password for {service} has been successfully saved.")
-        else:
+        if not self._verify_master_password(master_password):
             print("Invalid Master Password")
+            return
+        password_length = 20
+        generator = PasswordGenerator(password_length)
+        password = generator.generate()
+        encrypted_password = self._encrypt_password(master_password, password)
+        self._save_encrypted_password(service, encrypted_password)
+        print(f"A random password for {service} has been successfully saved.")
 
     def get_and_copy_password(self, service: str):
         """
@@ -209,18 +207,18 @@ class PasswordVault:
         if not self._is_user_initialized():
             return
         master_password = getpass("Enter your master password: ")
-        if self._verify_master_password(master_password):
-            encrypted_password = self._load_encrypted_password(service)
-            if encrypted_password:
-                decrypted_password = self._decrypt_password(
-                    master_password, encrypted_password
-                )
-                pyperclip.copy(decrypted_password)
-                print("Copied password to clipboard")
-            else:
-                print(f"password for {service} not found.")
-        else:
+        if not self._verify_master_password(master_password):
             print("Invalid Master Password")
+            return
+        encrypted_password = self._load_encrypted_password(service)
+        if not encrypted_password:
+            print(f"password for {service} not found.")
+            return
+        decrypted_password = self._decrypt_password(
+            master_password, encrypted_password
+        )
+        pyperclip.copy(decrypted_password)
+        print("Copied password to clipboard")
 
     def del_password(self, service: str):
         """
@@ -229,37 +227,41 @@ class PasswordVault:
         if not self._is_user_initialized():
             return
         master_password = getpass("Enter your master password: ")
-        master_pass_is_correct = self._verify_master_password(master_password)
-        if master_pass_is_correct:
-            data = self._load_data_from_file(self.passwords_path)
-            if service in data:
-                del data[service]
-                with open(self.passwords_path, "wb") as file:
-                    pickle.dump(data, file)
-                print(f"{service} has been successfully deleted.")
-            else:
-                print(f"{service} not found.")
-        else:
+        if not self._verify_master_password(master_password):
             print("Invalid Master Password")
+            return
+        data = self._load_data_from_file(self.passwords_path)
+        if not service in data:
+            print(f"{service} not found.")
+            return
+        del data[service]
+        with open(self.passwords_path, "wb") as file:
+            pickle.dump(data, file)
+        print(f"{service} has been successfully deleted.")
 
     def print_data(self):
         """
         Print data to the console for viewing purposes.
         """
-        if os.path.exists(self.user_info_path):
-            user_data = self._load_data_from_file(self.user_info_path)
-            for key, value in user_data.items():
-                print(f"{key}: {value}")
-        else:
+        self.print_user_data()
+        self.print_password_data()
+        
+    def print_user_data(self):
+        if not os.path.exists(self.user_info_path):
             print("User info data not found.")
-
-        if os.path.exists(self.passwords_path):
-            password_data = self._load_data_from_file(self.passwords_path)
-            for key, value in password_data.items():
-                print(f"{key}: {value}")
-        else:
+            return
+        user_data = self._load_data_from_file(self.user_info_path)
+        for key, value in user_data.items():
+            print(f"{key}: {value}")
+            
+    def print_password_data(self):
+        if not os.path.exists(self.passwords_path):
             print("Password data not found.")
-
+            return
+        password_data = self._load_data_from_file(self.passwords_path)
+        for key, value in password_data.items():
+            print(f"{key}: {value}")
+            
     def print_help(self):
         print(
             "setup: Set a master password, and generate salt.\n$ your-alias setup\n\n"
